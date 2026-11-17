@@ -80,7 +80,9 @@ export type ErrorCode =
   | 'room_not_found'
   | 'room_full'
   | 'already_joined'
-  | 'not_joined';
+  | 'not_joined'
+  /** Your connection is "down" (Wi-Fi reset sabotage): try again in a moment. */
+  | 'offline';
 
 export type ServerMessage =
   | {

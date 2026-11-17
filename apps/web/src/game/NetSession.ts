@@ -32,6 +32,11 @@ const REDUNDANCY = 3;
 const SMOOTH_MAX_PX = 64;
 /** Time constant of the correction smoothing. */
 const SMOOTH_MS = 80;
+/** Close code the server uses for the Wi-Fi reset sabotage (see server peer.ts). */
+const CLOSE_WIFI_RESET = 4001;
+/** How long we keep trying to get our seat back (the server keeps it 10 s). */
+const RECONNECT_FOR_MS = 12_000;
+const RECONNECT_EVERY_MS = 500;
 
 export const wsUrl = () => `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
 
@@ -62,6 +67,8 @@ export class NetSession implements GameSession {
   private reconnectToken: string | null = null;
   private disposed = false;
   private readonly timers: number[] = [];
+  private reconnectTimer: number | null = null;
+  private reconnectAttempt = 0;
 
   // --- authoritative view ---
   private latest: MatchState | null = null;
@@ -116,9 +123,46 @@ export class NetSession implements GameSession {
       });
     });
     ws.addEventListener('message', (e) => this.onMessage(String(e.data)));
-    ws.addEventListener('close', () => {
-      if (this.ws === ws && !this.disposed) useNet.setState({ status: 'closed' });
-    });
+    ws.addEventListener('close', (e) => this.onClose(ws, e.code));
+  }
+
+  /**
+   * RECONNECTION. Any unexpected close (a real network drop, or the server
+   * cutting us off for the Wi-Fi reset sabotage) starts a retry loop with the
+   * reconnect token from `welcome`. The server keeps our seat for 10 s; when
+   * it lets us back in it sends `welcome { resumed: true }` and a full
+   * snapshot, and we rebuild everything from it.
+   */
+  private onClose(ws: WebSocket, code: number): void {
+    if (this.ws !== ws || this.disposed) return;
+    const { status } = useNet.getState();
+    if (status === 'error' || !this.reconnectToken) {
+      // Never joined, or the room refused us: nothing to resume.
+      if (status !== 'error') useNet.setState({ status: 'closed' });
+      return;
+    }
+    const offline = useNet.getState().offline ?? {
+      since: performance.now(),
+      reason: code === CLOSE_WIFI_RESET ? 'wifiReset' : 'dropped',
+    };
+    if (performance.now() - offline.since > RECONNECT_FOR_MS) {
+      useNet.setState({ status: 'closed', offline: null });
+      return;
+    }
+    this.reconnectAttempt += 1;
+    useNet.setState({ status: 'reconnecting', offline, reconnectAttempt: this.reconnectAttempt });
+    this.reconnectTimer = window.setTimeout(() => this.connect(), RECONNECT_EVERY_MS);
+  }
+
+  /** Called on `welcome { resumed: true }`: drop everything derived from the old connection. */
+  private resync(): void {
+    this.pending.clear(); // the server discarded our queued inputs
+    this.snapshots.clear();
+    this.clock.reset();
+    this.prevPredicted = null;
+    this.correction = { x: 0, y: 0 };
+    this.reconnectAttempt = 0;
+    useNet.setState({ offline: null, reconnectAttempt: 0 });
   }
 
   private send(msg: ClientMessage): void {
@@ -138,6 +182,7 @@ export class NetSession implements GameSession {
       case 'welcome':
         this.playerId = msg.playerId;
         this.reconnectToken = msg.reconnectToken;
+        if (msg.resumed) this.resync();
         break;
       case 'snapshot':
         this.onSnapshot(msg);
@@ -146,7 +191,9 @@ export class NetSession implements GameSession {
         this.rtt = performance.now() - msg.t;
         break;
       case 'error':
-        useNet.setState({ status: 'error', error: msg.code });
+        // 'offline' = still inside the Wi-Fi reset: the server closes the
+        // socket and our reconnect loop simply tries again.
+        if (msg.code !== 'offline') useNet.setState({ status: 'error', error: msg.code });
         break;
       case 'sabotage':
         break;
@@ -221,6 +268,8 @@ export class NetSession implements GameSession {
   /** 30 Hz: predict the input locally, then send it (with a few previous ones). */
   step(input: PlayerInput): void {
     if (!this.playerId || !this.predicted || !this.latest) return;
+    // While offline the game freezes for us (it doesn't for the rival).
+    if (useNet.getState().offline) return;
 
     this.prevPredicted = clonePlayer(this.predicted);
     const out = predictStep(this.predicted, input, this.latest, this.map);
@@ -323,6 +372,7 @@ export class NetSession implements GameSession {
     if (this.disposed) return;
     this.disposed = true;
     for (const t of this.timers) window.clearInterval(t);
+    if (this.reconnectTimer !== null) window.clearTimeout(this.reconnectTimer);
     this.ws?.close(1000, 'left');
     this.ws = null;
   }

@@ -1,6 +1,7 @@
-import { MATCH, PICKUPS, PLAYER, SABOTAGE_DURATION_MS, TICK_MS, WEAPONS } from './config.js';
+import { MATCH, PICKUPS, PLAYER, TICK_MS, WEAPONS } from './config.js';
 import { distance } from './math.js';
 import { applyInput, createPlayer, isAlive } from './player.js';
+import { SABOTAGES } from './sabotages/index.js';
 import type {
   ArenaMap,
   GameEvent,
@@ -116,7 +117,7 @@ export function endRound(
 export function applySabotage(s: MatchState, by: string, kind: SabotageId): GameEvent[] {
   const victim = opponentOf(s, by);
   if (!victim) return [];
-  const durationMs = SABOTAGE_DURATION_MS[kind];
+  const { durationMs } = SABOTAGES[kind];
   victim.activeEffects = victim.activeEffects.filter((e) => e.id !== kind);
   victim.activeEffects.push({ id: kind, until: s.time + durationMs });
   return [{ type: 'sabotage', by, target: victim.id, kind, durationMs }];
@@ -124,7 +125,7 @@ export function applySabotage(s: MatchState, by: string, kind: SabotageId): Game
 
 /** True when the player's inputs must be ignored this step. */
 export const isInputBlocked = (s: MatchState, p: PlayerState): boolean =>
-  s.phase !== 'playing' || p.activeEffects.some((e) => e.id === 'deadBattery');
+  s.phase !== 'playing' || p.activeEffects.some((e) => SABOTAGES[e.id].blocksInput);
 
 /**
  * Advances the whole match by one fixed tick. This is the authoritative step:

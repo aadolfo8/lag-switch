@@ -1,4 +1,5 @@
 import {
+  type GameEvent,
   type MatchPhase,
   type MatchState,
   phaseSecondsLeft,
@@ -35,6 +36,8 @@ export interface HudState {
   score: { you: number; rival: number };
   lastRoundWinner: 'you' | 'rival' | 'draw' | null;
   matchWinner: 'you' | 'rival' | null;
+  /** Sabotages used on you this round, in order: the "What just happened?" card explains them. */
+  suffered: SabotageId[];
 }
 
 const initial: HudState = {
@@ -46,6 +49,7 @@ const initial: HudState = {
   score: { you: 0, rival: 0 },
   lastRoundWinner: null,
   matchWinner: null,
+  suffered: [],
 };
 
 export const useHud = create<HudState>(() => initial);
@@ -64,6 +68,16 @@ const toHud = (p: MatchState['players'][number]): PlayerHud => ({
   effects: p.activeEffects.map((e) => e.id),
   connected: p.connected,
 });
+
+/** Keeps the per-round list of sabotages suffered up to date. */
+export function recordEvent(e: GameEvent, youId: string | null): void {
+  if (e.type === 'roundStart') useHud.setState({ suffered: [] });
+  if (e.type === 'sabotage' && e.target === youId) {
+    useHud.setState((s) => ({
+      suffered: s.suffered.includes(e.kind) ? s.suffered : [...s.suffered, e.kind],
+    }));
+  }
+}
 
 /** Projects a match state (seen from `youId`) into the HUD store. */
 export function publishHud(s: MatchState, youId: string | null): void {

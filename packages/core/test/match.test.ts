@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MATCH, PICKUPS, SABOTAGE_DURATION_MS, TICK_MS, WEAPONS } from '../src/config.js';
+import { MATCH, PICKUPS, SABOTAGE, TICK_MS, WEAPONS } from '../src/config.js';
 import { ARENA } from '../src/map.js';
 import {
   addPlayer,
@@ -152,7 +152,7 @@ describe('pickups and sabotage', () => {
     );
     expect(findPlayer(s, 'a')?.sabotageSlot).toBeNull();
     expect(findPlayer(s, 'b')?.activeEffects).toHaveLength(1);
-    run(s, map, ticksFor(SABOTAGE_DURATION_MS.lagSpike));
+    run(s, map, ticksFor(SABOTAGE.lagSpike.durationMs));
     expect(findPlayer(s, 'b')?.activeEffects).toHaveLength(0);
   });
 
@@ -188,5 +188,29 @@ describe('the arena', () => {
       };
       expect(set.has(key(m))).toBe(true);
     }
+  });
+});
+
+describe('sabotage registry', () => {
+  it('has one entry per id, each with its explanation', async () => {
+    const { SABOTAGES } = await import('../src/sabotages/index.js');
+    for (const [id, s] of Object.entries(SABOTAGES)) {
+      expect(s.id).toBe(id);
+      expect(s.durationMs).toBeGreaterThan(0);
+      expect(s.explainCard.paragraphs.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('describes its network effect through the conditioner interface', async () => {
+    const { SABOTAGES } = await import('../src/sabotages/index.js');
+    const applied: Record<string, unknown> = {};
+    for (const s of Object.values(SABOTAGES)) {
+      s.applyToConditioner({ apply: (id, c) => (applied[id] = c) });
+    }
+    expect(applied).toEqual({
+      lagSpike: { delayMs: SABOTAGE.lagSpike.delayMsEachWay },
+      packetLoss: { lossRate: SABOTAGE.packetLoss.lossRate },
+      wifiReset: { blocked: true },
+    });
   });
 });

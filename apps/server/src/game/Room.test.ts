@@ -170,3 +170,70 @@ describe('Room', () => {
     expect(seatA.rtt).toBeCloseTo(120);
   });
 });
+
+describe('Room sabotages', () => {
+  const useSabotage = (
+    ctx: ReturnType<typeof setup>,
+    kind: 'lagSpike' | 'packetLoss' | 'wifiReset' | 'deadBattery',
+  ) => {
+    const pa = ctx.room.state.players.find((p) => p.id === ctx.seatA.playerId);
+    if (!pa) throw new Error();
+    pa.sabotageSlot = kind;
+    ctx.room.receive(ctx.seatA.playerId, {
+      type: 'input',
+      inputs: [input(ctx.seatA.lastProcessedSeq + 1, { useSabotage: true })],
+    });
+    ctx.tick();
+  };
+
+  it('a lag spike slows the victim’s link, and only for its duration', () => {
+    const ctx = setup();
+    ctx.toPlaying();
+    useSabotage(ctx, 'lagSpike');
+    expect(ctx.seatB.conditioner.conditions.delayMs).toBe(200);
+    expect(ctx.seatA.conditioner.conditions.delayMs).toBe(0);
+    expect(ctx.b.received.some((m) => m.type === 'sabotage')).toBe(true);
+    ctx.tick(Math.ceil(5000 / TICK_MS) + 1);
+    expect(ctx.seatB.conditioner.conditions.delayMs).toBe(0);
+  });
+
+  it('packet loss drops the victim’s traffic', () => {
+    const ctx = setup();
+    ctx.toPlaying();
+    useSabotage(ctx, 'packetLoss');
+    expect(ctx.seatB.conditioner.conditions.lossRate).toBeCloseTo(0.25);
+  });
+
+  it('a wi-fi reset really closes the socket and refuses to reconnect until it ends', () => {
+    const ctx = setup();
+    ctx.toPlaying();
+    useSabotage(ctx, 'wifiReset');
+    expect(ctx.b.closed?.code).toBe(4001);
+    expect(ctx.seatB.peer).toBeNull();
+
+    const early = new FakePeer();
+    expect(ctx.room.join(early, 'Bo', { reconnectToken: ctx.seatB.reconnectToken })).toEqual({
+      ok: false,
+      code: 'offline',
+    });
+
+    ctx.advance(3000);
+    ctx.tick(Math.ceil(3000 / TICK_MS) + 1);
+    const back = new FakePeer();
+    const r = ctx.room.join(back, 'Bo', { reconnectToken: ctx.seatB.reconnectToken });
+    expect(r).toMatchObject({ ok: true, resumed: true });
+    // resync: welcome + a full snapshot right away
+    expect(back.received.map((m) => m.type)).toEqual(['welcome', 'snapshot']);
+  });
+
+  it('effects are lifted when a new round clears them', () => {
+    const ctx = setup();
+    ctx.toPlaying();
+    useSabotage(ctx, 'lagSpike');
+    const pb = ctx.room.state.players.find((p) => p.id === ctx.seatB.playerId);
+    if (pb) pb.hp = 0; // force the round to end on the next timeout check
+    ctx.room.state.phaseEndsAt = ctx.room.state.time; // end the round now
+    ctx.tick(Math.ceil((MATCH.roundEndMs + 100) / TICK_MS));
+    expect(ctx.seatB.conditioner.conditions.delayMs).toBe(0);
+  });
+});

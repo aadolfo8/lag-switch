@@ -16,6 +16,10 @@ import {
   removePlayer,
   resetMatch,
   rewindMsFor,
+  SABOTAGE_LIST,
+  SABOTAGES,
+  type Sabotage,
+  type SabotageId,
   type ServerMessage,
   type ShotTarget,
   stepMatch,
@@ -66,6 +70,8 @@ export interface Seat {
   viewDelayMs: number;
   /** Every message to and from this player goes through here. */
   conditioner: NetworkConditioner<ClientMessage>;
+  /** Sabotages currently applied to this seat's link. */
+  effectsApplied: Set<SabotageId>;
 }
 
 export interface JoinOptions {
@@ -77,7 +83,7 @@ export interface JoinOptions {
 
 export type JoinResult =
   | { ok: true; seat: Seat; resumed: boolean }
-  | { ok: false; code: 'room_full' };
+  | { ok: false; code: 'room_full' | 'offline' };
 
 export interface RoomOptions {
   code: string;
@@ -123,6 +129,10 @@ export class Room {
       : undefined;
 
     if (existing) {
+      // Mom is still rebooting the router: no connection for you yet.
+      if (this.hasActiveEffect(existing.playerId, (s) => s.closesSocket)) {
+        return { ok: false, code: 'offline' };
+      }
       existing.peer?.close(CloseCode.replaced, 'replaced by a newer connection');
       // Whatever was in flight was addressed to the old socket.
       existing.conditioner.inbound.clear();
@@ -156,6 +166,7 @@ export class Room {
       isBot,
       viewDelayMs: isBot ? 0 : NET.interpolationDelayMs,
       conditioner: new NetworkConditioner<ClientMessage>(),
+      effectsApplied: new Set(),
     };
     if (lagMs) seat.conditioner.setBase({ delayMs: lagMs / 2 });
     this.seats.set(seat.playerId, seat);
@@ -266,6 +277,7 @@ export class Room {
     });
     this.broadcastEvents(events);
     this.history.record(this.state);
+    this.syncSabotages(events);
 
     if (this.humanCount > 0) this.lastOccupiedAt = now;
     if (isSnapshotTick(this.state.tick)) this.sendSnapshots();
@@ -282,6 +294,51 @@ export class Room {
     return this.state.players
       .filter((p) => p.id !== shooter.id && p.hp > 0)
       .map((p) => ({ id: p.id, pos: this.history.positionAt(p.id, time) ?? { ...p.pos } }));
+  }
+
+  /**
+   * Makes each seat's network link match the sabotages active on its player.
+   * Driven by state, not by events: when an effect expires or a new round
+   * clears it, the overlay comes off on the next tick, whatever happened.
+   */
+  private syncSabotages(events: GameEvent[]): void {
+    for (const e of events) {
+      if (e.type !== 'sabotage') continue;
+      const victim = this.seats.get(e.target);
+      if (victim)
+        this.send(victim, { type: 'sabotage', kind: e.kind, by: e.by, durationMs: e.durationMs });
+    }
+
+    for (const seat of this.seats.values()) {
+      const player = this.state.players.find((p) => p.id === seat.playerId);
+      const active = new Set(player?.activeEffects.map((e) => e.id));
+      for (const sabotage of SABOTAGE_LIST) {
+        const on = active.has(sabotage.id);
+        const applied = seat.effectsApplied.has(sabotage.id);
+        if (on && !applied) {
+          seat.effectsApplied.add(sabotage.id);
+          sabotage.applyToConditioner(seat.conditioner);
+          if (sabotage.closesSocket && seat.peer) {
+            // A REAL disconnection: the client has to notice, reconnect with
+            // its token and resync from a snapshot.
+            const peer = seat.peer;
+            this.disconnect(seat.playerId, peer);
+            peer.close(CloseCode.wifiReset, 'mom rebooted the wi-fi');
+          }
+        } else if (!on && applied) {
+          seat.effectsApplied.delete(sabotage.id);
+          seat.conditioner.remove(sabotage.id);
+        }
+      }
+    }
+  }
+
+  private hasActiveEffect(playerId: string, predicate: (s: Sabotage) => boolean): boolean {
+    const player = this.state.players.find((p) => p.id === playerId);
+    return (
+      player?.activeEffects.some((e) => e.until > this.state.time && predicate(SABOTAGES[e.id])) ??
+      false
+    );
   }
 
   private sendSnapshots(): void {

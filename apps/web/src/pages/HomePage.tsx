@@ -1,4 +1,4 @@
-import { RoomCodeSchema, type SabotageId } from '@lag-switch/core';
+import { RoomCodeSchema, SABOTAGE_LIST } from '@lag-switch/core';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { type FormEvent, useId, useState } from 'react';
 import { SabotageIcon } from '../components/SabotageIcon';
@@ -8,17 +8,6 @@ import { getPlayerName, setPlayerName } from '../lib/storage';
 import './menu.css';
 
 export const REPO_URL = 'https://github.com/aadolfo8/lag-switch';
-
-const ARSENAL: { kind: SabotageId; name: string; line: string }[] = [
-  { kind: 'lagSpike', name: 'lag spike', line: '+400 ms on your rival’s connection, both ways' },
-  { kind: 'wifiReset', name: 'mom reboots the wi-fi', line: '3 s disconnect, then resync' },
-  {
-    kind: 'deadBattery',
-    name: 'dead controller battery',
-    line: 'their inputs are ignored for 2 s',
-  },
-  { kind: 'packetLoss', name: 'packet loss', line: '1 in 4 of their packets vanish' },
-];
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -138,12 +127,12 @@ export function HomePage() {
       <section className="arsenal" aria-labelledby="arsenal-title">
         <h2 id="arsenal-title">the arsenal</h2>
         <ul>
-          {ARSENAL.map((s) => (
-            <li key={s.kind}>
-              <SabotageIcon kind={s.kind} />
+          {SABOTAGE_LIST.map((s) => (
+            <li key={s.id}>
+              <SabotageIcon kind={s.id} />
               <div>
                 <span className="arsenal-name">{s.name}</span>
-                <span className="arsenal-line">{s.line}</span>
+                <span className="arsenal-line">{s.tagline}</span>
               </div>
             </li>
           ))}

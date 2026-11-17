@@ -8,5 +8,6 @@ export * from './netcode/prediction.js';
 export * from './physics.js';
 export * from './player.js';
 export * from './protocol.js';
+export * from './sabotages/index.js';
 export * from './types.js';
 export * from './weapons.js';

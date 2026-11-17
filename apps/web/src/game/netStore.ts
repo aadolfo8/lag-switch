@@ -29,6 +29,8 @@ export interface NetStats {
   interpolationMs: number;
   effects: { id: SabotageId; leftMs: number }[];
   reconnectAttempt: number;
+  /** Set while the socket is gone and we are trying to get our seat back. */
+  offline: { since: number; reason: 'wifiReset' | 'dropped' } | null;
 }
 
 export const initialNetStats: NetStats = {
@@ -47,6 +49,7 @@ export const initialNetStats: NetStats = {
   interpolationMs: 0,
   effects: [],
   reconnectAttempt: 0,
+  offline: null,
 };
 
 export const useNet = create<NetStats>(() => initialNetStats);

@@ -16,16 +16,10 @@
  * what makes the full-snapshot design visible).
  */
 
-export interface LinkConditions {
-  /** Added one-way delay (ms). */
-  delayMs: number;
-  /** Extra random delay in [0, jitterMs). */
-  jitterMs: number;
-  /** Probability in [0, 1] that a message is dropped. */
-  lossRate: number;
-  /** Nothing gets through at all. */
-  blocked: boolean;
-}
+import type { ConditionerControls, NetworkConditions } from '@lag-switch/core';
+
+/** Delay, jitter, loss and blocking: the four knobs (defined in core so sabotages can use them). */
+export type LinkConditions = NetworkConditions;
 
 export const CLEAR_LINK: LinkConditions = { delayMs: 0, jitterMs: 0, lossRate: 0, blocked: false };
 
@@ -133,7 +127,7 @@ export interface ConditionerOptions {
  * One per player. A base condition (e.g. ?lag=150 for testing) plus any
  * number of named overlays (one per active sabotage) that stack.
  */
-export class NetworkConditioner<In = unknown> {
+export class NetworkConditioner<In = unknown> implements ConditionerControls {
   private base: LinkConditions = CLEAR_LINK;
   private readonly overlays = new Map<string, Partial<LinkConditions>>();
   readonly inbound: Lane<In>;

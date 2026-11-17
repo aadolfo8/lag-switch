@@ -65,6 +65,7 @@ export class GameGateway implements OnGatewayConnection {
       });
       if (!result.ok) {
         reply({ type: 'error', code: result.code });
+        if (result.code === 'offline') ws.close(CloseCode.wifiReset, 'still offline');
         return;
       }
       joined = { room, playerId: result.seat.playerId };

@@ -1,7 +1,7 @@
 import { TICK_MS, type Vec2 } from '@lag-switch/core';
 import { Application, Container } from 'pixi.js';
 import { Camera } from './Camera';
-import { publishHud } from './hudStore';
+import { publishHud, recordEvent } from './hudStore';
 import { InputController } from './InputController';
 import type { GameSession } from './session';
 import { WorldRenderer } from './WorldRenderer';
@@ -84,6 +84,7 @@ export class GameClient {
     const youId = this.session.youId();
     for (const e of this.session.drainEvents()) {
       this.renderer.onEvent(e, now);
+      recordEvent(e, youId);
       if (e.type === 'hit' && e.target === youId) this.camera.shake(0.35);
     }
     this.camera.update(deltaMs);

@@ -76,10 +76,15 @@ export const ROOMS = {
   idleExpiryMs: 10 * 60_000,
 } as const;
 
-/** How long each sabotage lasts on its victim. The behaviour lives in src/sabotages. */
-export const SABOTAGE_DURATION_MS = {
-  lagSpike: 5000,
-  packetLoss: 5000,
-  wifiReset: 3000,
-  deadBattery: 2000,
+/**
+ * Sabotage tuning. The behaviour of each one lives in src/sabotages/<id>.ts;
+ * the numbers live here.
+ */
+export const SABOTAGE = {
+  /** +200 ms each way = +400 ms of ping. */
+  lagSpike: { durationMs: 5000, delayMsEachWay: 200 },
+  packetLoss: { durationMs: 5000, lossRate: 0.25 },
+  /** The socket is really closed and reconnecting is refused until it ends. */
+  wifiReset: { durationMs: 3000 },
+  deadBattery: { durationMs: 2000 },
 } as const;

@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { DebugOverlay } from '../components/DebugOverlay';
 import { GameCanvas } from '../components/GameCanvas';
 import { HudBottom, HudTop } from '../components/Hud';
+import { SabotageNote } from '../components/SabotageNote';
 import { NetSession } from '../game/NetSession';
 import { toggleDebug, useNet } from '../game/netStore';
 import { copyText, roomLink } from '../lib/share';
@@ -40,6 +41,7 @@ export function RoomPage({ code, created, lagMs }: Props) {
           <kbd>F3</kbd> netcode
         </span>
       </HudBottom>
+      <SabotageNote />
       <DebugOverlay />
       <RoomStatus code={code} created={created} />
     </main>
