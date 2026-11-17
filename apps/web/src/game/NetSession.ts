@@ -99,6 +99,12 @@ export class NetSession implements GameSession {
     // Open the socket on the next task: if the page unmounts us straight
     // away (React StrictMode does in dev) no connection is ever started.
     this.timers.push(window.setTimeout(() => this.connect(), 0));
+    // Dev-only peephole for scripted demos and debugging (stripped from builds).
+    if (import.meta.env.DEV) {
+      Object.assign(window, {
+        __lagSwitch: { state: () => this.latest, youId: () => this.playerId },
+      });
+    }
     this.timers.push(
       window.setInterval(() => this.ping(), PING_EVERY_MS),
       window.setInterval(() => this.publishStats(), STATS_EVERY_MS),

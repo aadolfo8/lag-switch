@@ -18,5 +18,6 @@
       "cache": false,
       "persistent": true
     }
-  }
+  },
+  "globalPassThroughEnv": ["CI", "PW_CHANNEL"]
 }
