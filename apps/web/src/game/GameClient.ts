@@ -1,8 +1,12 @@
-import { TICK_MS, type Vec2 } from '@lag-switch/core';
+import { type GameEvent, type SabotageId, TICK_MS, type Vec2 } from '@lag-switch/core';
 import { Application, Container } from 'pixi.js';
+import { Sketchbook } from './art/Sketchbook';
+import { play, toggleMute, unlockAudio } from './audio';
 import { Camera } from './Camera';
+import { ScreenFx } from './fx/ScreenFx';
 import { publishHud, recordEvent } from './hudStore';
 import { InputController } from './InputController';
+import { useNet } from './netStore';
 import type { GameSession } from './session';
 import { WorldRenderer } from './WorldRenderer';
 
@@ -21,25 +25,41 @@ export class GameClient {
   private readonly world = new Container();
   private readonly camera: Camera;
   private readonly renderer: WorldRenderer;
+  private readonly fx: ScreenFx;
   private readonly input: InputController;
   private accumulator = 0;
   private seq = 0;
   private youDrawnAt: Vec2 = { x: 0, y: 0 };
+  private youEffects = new Set<SabotageId>();
+  private extraKey: ((code: string) => void) | null = null;
 
   private constructor(
     private readonly app: Application,
     private readonly session: GameSession,
     host: HTMLElement,
   ) {
-    this.renderer = new WorldRenderer(session.map);
+    const art = new Sketchbook(app.renderer, session.map);
+    this.renderer = new WorldRenderer(art);
     this.world.addChild(this.renderer.root);
-    app.stage.addChild(this.world);
+    this.fx = new ScreenFx(this.world);
+    app.stage.addChild(this.world, this.fx.flashLayer);
     this.camera = new Camera(this.world);
     this.input = new InputController(host);
+    this.input.onKey = (code) => {
+      unlockAudio();
+      if (code === 'KeyM') toggleMute();
+      this.extraKey?.(code);
+    };
+    host.addEventListener('pointerdown', unlockAudio, { once: true });
     app.ticker.add((t) => this.tick(t.deltaMS));
   }
 
   static async create(host: HTMLElement, session: GameSession): Promise<GameClient> {
+    // Canvas text (pickup labels) needs the handwriting font before first use.
+    await Promise.race([
+      Promise.all([document.fonts.load('700 22px Caveat'), document.fonts.load('500 22px Caveat')]),
+      new Promise((r) => setTimeout(r, 1500)), // never block the game on a font
+    ]);
     const app = new Application();
     await app.init({
       resizeTo: host,
@@ -56,7 +76,7 @@ export class GameClient {
   }
 
   set onKey(fn: ((code: string) => void) | null) {
-    this.input.onKey = fn;
+    this.extraKey = fn;
   }
 
   private tick(deltaMs: number): void {
@@ -72,30 +92,78 @@ export class GameClient {
       stepped = true;
     }
 
-    this.camera.fit({ x: this.app.screen.width, y: this.app.screen.height }, this.session.map.size);
+    const view = { x: this.app.screen.width, y: this.app.screen.height };
+    this.camera.fit(view, this.session.map.size);
 
     const frame = this.session.frame(this.accumulator / TICK_MS, now);
     if (frame) {
       const you = frame.players.find((p) => p.isYou);
-      if (you) this.youDrawnAt = you.pos;
+      if (you) {
+        this.youDrawnAt = you.pos;
+        this.youEffects = new Set(you.effects);
+      }
       this.renderer.render(frame, now);
     }
 
     const youId = this.session.youId();
     for (const e of this.session.drainEvents()) {
-      this.renderer.onEvent(e, now);
+      this.renderer.onEvent(e, now, youId);
       recordEvent(e, youId);
-      if (e.type === 'hit' && e.target === youId) this.camera.shake(0.35);
+      this.react(e, youId);
     }
     this.camera.update(deltaMs);
+    this.fx.update(
+      now,
+      { w: view.x, h: view.y },
+      this.youEffects,
+      useNet.getState().offline !== null,
+    );
 
     const state = this.session.state();
     if (stepped && state) publishHud(state, youId);
   }
 
+  /** Sound and screen feedback for things that just happened. */
+  private react(e: GameEvent, youId: string | null): void {
+    const mine = 'by' in e && e.by === youId;
+    switch (e.type) {
+      case 'shot':
+        play(e.weapon, { volume: mine ? 0.55 : 0.25 });
+        if (mine && e.weapon === 'shotgun') this.camera.shake(0.15);
+        break;
+      case 'hit':
+        if (e.target === youId) {
+          play('hurt');
+          this.camera.shake(0.4);
+          this.fx.flash();
+        } else if (mine) {
+          play('hit');
+        }
+        break;
+      case 'reload':
+        if (mine) play('reload', { volume: 0.4 });
+        break;
+      case 'pickup':
+        if (mine) play('pickup');
+        break;
+      case 'sabotage':
+        play('sabotage', { volume: e.target === youId ? 0.6 : 0.35 });
+        if (e.target === youId) this.camera.shake(0.25);
+        break;
+      case 'roundStart':
+        play('roundStart', { volume: 0.4 });
+        break;
+      case 'roundEnd':
+        play('roundEnd', { volume: 0.4 });
+        break;
+      default:
+        break;
+    }
+  }
+
   destroy(): void {
     this.input.dispose();
     this.session.dispose();
-    this.app.destroy(true, { children: true });
+    this.app.destroy(true, { children: true, texture: true });
   }
 }

@@ -96,7 +96,9 @@ export class NetSession implements GameSession {
 
   constructor(private readonly opts: NetSessionOptions) {
     useNet.setState({ ...initialNetStats, roomCode: opts.code });
-    this.connect();
+    // Open the socket on the next task: if the page unmounts us straight
+    // away (React StrictMode does in dev) no connection is ever started.
+    this.timers.push(window.setTimeout(() => this.connect(), 0));
     this.timers.push(
       window.setInterval(() => this.ping(), PING_EVERY_MS),
       window.setInterval(() => this.publishStats(), STATS_EVERY_MS),
@@ -371,7 +373,10 @@ export class NetSession implements GameSession {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    for (const t of this.timers) window.clearInterval(t);
+    for (const t of this.timers) {
+      window.clearInterval(t);
+      window.clearTimeout(t);
+    }
     if (this.reconnectTimer !== null) window.clearTimeout(this.reconnectTimer);
     this.ws?.close(1000, 'left');
     this.ws = null;

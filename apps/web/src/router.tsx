@@ -6,10 +6,18 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router';
+import { lazy, Suspense } from 'react';
 import { HomePage } from './pages/HomePage';
-import { PlayBotPage } from './pages/PlayBotPage';
-import { PlayLocalPage } from './pages/PlayLocalPage';
-import { RoomPage } from './pages/RoomPage';
+
+// The game pages pull in PixiJS, filters and the netcode: load them only when
+// a match starts, so the menu shows up fast.
+const PlayBotPage = lazy(() =>
+  import('./pages/PlayBotPage').then((m) => ({ default: m.PlayBotPage })),
+);
+const PlayLocalPage = lazy(() =>
+  import('./pages/PlayLocalPage').then((m) => ({ default: m.PlayLocalPage })),
+);
+const RoomPage = lazy(() => import('./pages/RoomPage').then((m) => ({ default: m.RoomPage })));
 
 const rootRoute = createRootRoute({ component: Outlet });
 
@@ -23,7 +31,11 @@ const homeRoute = createRoute({
 const localRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/play/local',
-  component: PlayLocalPage,
+  component: () => (
+    <Suspense fallback={null}>
+      <PlayLocalPage />
+    </Suspense>
+  ),
 });
 
 /** Accepts ?lag=150: simulated round-trip latency on your own connection. */
@@ -38,7 +50,11 @@ const botRoute = createRoute({
   validateSearch: parseLag,
   component: function BotRoute() {
     const { lag } = botRoute.useSearch();
-    return <PlayBotPage lagMs={lag} />;
+    return (
+      <Suspense fallback={null}>
+        <PlayBotPage lagMs={lag} />
+      </Suspense>
+    );
   },
 });
 
@@ -63,7 +79,11 @@ const roomRoute = createRoute({
     const { code } = roomRoute.useParams();
     const { created, lag } = roomRoute.useSearch();
     // key: a different code is a different room, so remount everything.
-    return <RoomPage key={code} code={code} created={created ?? false} lagMs={lag} />;
+    return (
+      <Suspense fallback={null}>
+        <RoomPage key={code} code={code} created={created ?? false} lagMs={lag} />
+      </Suspense>
+    );
   },
 });
 

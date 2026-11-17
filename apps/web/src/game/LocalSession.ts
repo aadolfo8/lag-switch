@@ -8,6 +8,7 @@ import {
   lerpVec,
   type MatchState,
   type PlayerInput,
+  resetMatch,
   stepMatch,
   type Vec2,
 } from '@lag-switch/core';
@@ -70,6 +71,10 @@ export class LocalSession implements GameSession {
     const e = this.events;
     this.events = [];
     return e;
+  }
+
+  rematch(): void {
+    if (this.match.phase === 'matchEnd') this.events.push(...resetMatch(this.match, this.map));
   }
 
   dispose(): void {}

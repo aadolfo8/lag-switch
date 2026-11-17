@@ -38,7 +38,18 @@ export interface HudState {
   matchWinner: 'you' | 'rival' | null;
   /** Sabotages used on you this round, in order: the "What just happened?" card explains them. */
   suffered: SabotageId[];
+  /** Short-lived announcements ("lagbot used LAG SPIKE on you"). */
+  toasts: Toast[];
 }
+
+export interface Toast {
+  id: number;
+  what: 'sabotage' | 'pickup';
+  by: 'you' | 'rival';
+  kind: SabotageId;
+}
+
+let toastId = 0;
 
 const initial: HudState = {
   phase: 'waiting',
@@ -50,6 +61,7 @@ const initial: HudState = {
   lastRoundWinner: null,
   matchWinner: null,
   suffered: [],
+  toasts: [],
 };
 
 export const useHud = create<HudState>(() => initial);
@@ -77,7 +89,22 @@ export function recordEvent(e: GameEvent, youId: string | null): void {
       suffered: s.suffered.includes(e.kind) ? s.suffered : [...s.suffered, e.kind],
     }));
   }
+  if (e.type === 'sabotage' || (e.type === 'pickup' && e.by === youId)) {
+    const toast: Toast = {
+      id: ++toastId,
+      what: e.type,
+      by: e.by === youId ? 'you' : 'rival',
+      kind: e.kind,
+    };
+    useHud.setState((s) => ({ toasts: [...s.toasts.slice(-2), toast] }));
+  }
 }
+
+export const dismissToast = (id: number) =>
+  useHud.setState((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
+
+/** Commands the UI can send to the running session (set by GameCanvas). */
+export const useActions = create<{ rematch: (() => void) | null }>(() => ({ rematch: null }));
 
 /** Projects a match state (seen from `youId`) into the HUD store. */
 export function publishHud(s: MatchState, youId: string | null): void {

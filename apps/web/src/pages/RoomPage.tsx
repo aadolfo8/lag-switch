@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { DebugOverlay } from '../components/DebugOverlay';
 import { GameCanvas } from '../components/GameCanvas';
 import { HudBottom, HudTop } from '../components/Hud';
+import { ExplainCard, MatchEnd, RoundBanner, Toasts } from '../components/Overlays';
 import { SabotageNote } from '../components/SabotageNote';
 import { NetSession } from '../game/NetSession';
 import { toggleDebug, useNet } from '../game/netStore';
@@ -43,8 +44,12 @@ export function RoomPage({ code, created, lagMs, vsBot = false }: Props) {
           <kbd>F3</kbd> netcode
         </span>
       </HudBottom>
+      <RoundBanner />
+      <Toasts />
       <SabotageNote />
       <DebugOverlay />
+      <ExplainCard />
+      <MatchEnd vsBot={vsBot} />
       <RoomStatus code={code} created={created} vsBot={vsBot} />
     </main>
   );

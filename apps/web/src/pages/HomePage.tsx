@@ -1,11 +1,23 @@
 import { RoomCodeSchema, SABOTAGE_LIST } from '@lag-switch/core';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { motion, type Variants } from 'motion/react';
 import { type FormEvent, useId, useState } from 'react';
 import { SabotageIcon } from '../components/SabotageIcon';
 import { useCreateRoom } from '../lib/api';
 import { copyText, roomLink } from '../lib/share';
 import { getPlayerName, setPlayerName } from '../lib/storage';
 import './menu.css';
+
+/** Menu entrance: each block lands like a note dropped on the desk. */
+const drop: Variants = {
+  hidden: { opacity: 0, y: 18, rotate: -1.5 },
+  show: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    rotate: 0,
+    transition: { delay: 0.05 + i * 0.07, type: 'spring', stiffness: 320, damping: 24 },
+  }),
+};
 
 export const REPO_URL = 'https://github.com/aadolfo8/lag-switch';
 
@@ -45,7 +57,13 @@ export function HomePage() {
   return (
     <main className="menu">
       <div className="menu-main">
-        <div className="menu-title">
+        <motion.div
+          className="menu-title"
+          variants={drop}
+          initial="hidden"
+          animate="show"
+          custom={0}
+        >
           <h1>
             Lag <span>Switch</span>
           </h1>
@@ -58,12 +76,24 @@ export function HomePage() {
               strokeLinecap="round"
             />
           </svg>
-        </div>
-        <p className="menu-tagline">
+        </motion.div>
+        <motion.p
+          className="menu-tagline"
+          variants={drop}
+          initial="hidden"
+          animate="show"
+          custom={1}
+        >
           A 1v1 duel where the weapons are everything that goes wrong when you play online.
-        </p>
+        </motion.p>
 
-        <div className="menu-actions">
+        <motion.div
+          className="menu-actions"
+          variants={drop}
+          initial="hidden"
+          animate="show"
+          custom={2}
+        >
           <Link to="/play/bot" className="btn btn-primary" onClick={commitName}>
             play vs bot →
           </Link>
@@ -116,7 +146,7 @@ export function HomePage() {
               autoComplete="nickname"
             />
           </div>
-        </div>
+        </motion.div>
 
         <nav className="menu-links" aria-label="About the project">
           <a href={`${REPO_URL}#netcode`}>how the netcode works →</a>
@@ -124,7 +154,14 @@ export function HomePage() {
         </nav>
       </div>
 
-      <section className="arsenal" aria-labelledby="arsenal-title">
+      <motion.section
+        className="arsenal"
+        aria-labelledby="arsenal-title"
+        variants={drop}
+        initial="hidden"
+        animate="show"
+        custom={3}
+      >
         <h2 id="arsenal-title">the arsenal</h2>
         <ul>
           {SABOTAGE_LIST.map((s) => (
@@ -141,7 +178,7 @@ export function HomePage() {
           Grab one on the map, press <kbd>E</kbd>. The server really does it to your rival’s
           connection.
         </p>
-      </section>
+      </motion.section>
     </main>
   );
 }

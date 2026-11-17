@@ -1,0 +1,293 @@
+/* ---------- round banner ---------- */
+
+.banner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.banner-text {
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: clamp(64px, 12vw, 140px);
+  line-height: 1;
+  color: var(--ink);
+  text-shadow: 4px 4px 0 var(--paper);
+}
+
+.banner-text--you {
+  color: var(--you);
+}
+
+.banner-text--danger {
+  color: var(--danger);
+}
+
+/* ---------- toasts ---------- */
+
+.toasts {
+  position: absolute;
+  top: 116px;
+  right: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  font-family: var(--font-hand);
+  font-size: 22px;
+  font-weight: 700;
+  background: var(--panel);
+  border: 2px solid var(--ink-muted);
+  border-radius: var(--radius-b);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.toast--bad {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ---------- explain card & match end ---------- */
+
+.explain {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(21 23 26 / 0.82);
+  z-index: 20;
+  overflow-y: auto;
+}
+
+.explain-sheet,
+.end-sheet {
+  width: min(1100px, 100%);
+  padding: 36px 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0,
+    transparent 31px,
+    var(--rule) 31px,
+    var(--rule) 32px
+  );
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-a);
+  box-shadow: 8px 8px 0 var(--shadow);
+}
+
+.explain-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.explain-result {
+  font-family: var(--font-hand);
+  font-size: 26px;
+}
+
+.explain-result--you {
+  color: var(--you);
+}
+
+.explain-result--rival {
+  color: var(--danger);
+}
+
+.explain-result--draw {
+  color: var(--ink-muted);
+}
+
+.explain-head h2 {
+  margin: 4px 0 0;
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: clamp(48px, 7vw, 72px);
+  line-height: 0.95;
+}
+
+.explain-head mark {
+  color: inherit;
+  background: linear-gradient(transparent 60%, var(--highlight-soft) 60%);
+}
+
+.explain-count {
+  font-family: var(--font-hand);
+  font-size: 24px;
+  color: var(--ink-muted);
+}
+
+.explain-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 14px;
+  font-family: var(--font-hand);
+  font-size: 22px;
+  color: var(--ink-muted);
+  background: transparent;
+  border: 2px dashed var(--shadow);
+  border-radius: var(--radius-c);
+  cursor: pointer;
+}
+
+.chip[aria-selected="true"] {
+  color: var(--ink);
+  border-style: solid;
+  border-color: var(--ink);
+}
+
+.explain-body {
+  display: flex;
+  gap: 44px;
+  align-items: flex-start;
+}
+
+.explain-text {
+  flex: 0 0 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink-body);
+}
+
+.explain-text p {
+  margin: 0;
+}
+
+.explain-text strong {
+  color: var(--ink);
+}
+
+.explain-figure {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 20px 24px 12px;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: 8px 14px 6px 12px;
+  box-shadow: 5px 5px 0 var(--shadow);
+}
+
+.explain-figure figcaption {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+.explain-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.explain-foot a {
+  font-family: var(--font-hand);
+  font-size: 24px;
+  color: var(--you);
+}
+
+.explain-foot a:hover {
+  color: var(--highlight);
+}
+
+.btn-medium {
+  min-height: 56px;
+  font-size: 30px;
+  padding: 8px 28px;
+}
+
+/* ---------- match end ---------- */
+
+.end-sheet {
+  width: min(560px, 100%);
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.end-sheet h2 {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: 96px;
+  line-height: 0.9;
+}
+
+.end-win {
+  color: var(--you);
+}
+
+.end-lose {
+  color: var(--danger);
+}
+
+.end-score {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 56px;
+  font-weight: 700;
+}
+
+.end-line {
+  margin: 0 0 12px;
+  font-size: 17px;
+  color: var(--ink-body);
+}
+
+.end-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+@media (max-width: 860px) {
+  .explain-body {
+    flex-direction: column;
+  }
+
+  .explain-text {
+    flex-basis: auto;
+  }
+
+  .explain-sheet {
+    padding: 24px 20px;
+  }
+}

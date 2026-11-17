@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { GameCanvas } from '../components/GameCanvas';
 import { HudBottom, HudTop } from '../components/Hud';
+import { MatchEnd, RoundBanner, Toasts } from '../components/Overlays';
 import { LocalSession } from '../game/LocalSession';
 
 /**
@@ -15,6 +16,9 @@ export function PlayLocalPage() {
       <GameCanvas createSession={createSession} />
       <HudTop />
       <HudBottom />
+      <RoundBanner />
+      <Toasts />
+      <MatchEnd vsBot />
     </main>
   );
 }

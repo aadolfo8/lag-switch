@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { GameClient } from '../game/GameClient';
-import { resetHud } from '../game/hudStore';
+import { resetHud, useActions } from '../game/hudStore';
 import type { GameSession } from '../game/session';
 
 interface Props {
@@ -27,6 +27,7 @@ export function GameCanvas({ createSession, onKey }: Props) {
     let client: GameClient | null = null;
     resetHud();
     const session = createSession();
+    useActions.setState({ rematch: () => session.rematch() });
 
     GameClient.create(el, session).then((c) => {
       if (cancelled) {
@@ -39,6 +40,7 @@ export function GameCanvas({ createSession, onKey }: Props) {
 
     return () => {
       cancelled = true;
+      useActions.setState({ rematch: null });
       if (client) client.destroy();
       else session.dispose();
     };

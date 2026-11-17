@@ -47,5 +47,7 @@ export interface GameSession {
   state(): MatchState | null;
   /** Events that happened since the last call (shots, hits, pickups…). */
   drainEvents(): GameEvent[];
+  /** Votes for a rematch once the match is over. */
+  rematch(): void;
   dispose(): void;
 }

@@ -84,6 +84,9 @@ export function HudBottom({ children }: { children?: React.ReactNode }) {
         <span>
           <kbd>Q</kbd> swap gun
         </span>
+        <span>
+          <kbd>M</kbd> sound
+        </span>
         {children}
       </div>
     </footer>

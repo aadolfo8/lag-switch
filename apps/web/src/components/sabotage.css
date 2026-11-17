@@ -5,18 +5,23 @@
   pointer-events: none;
 }
 
-.sab-note--big {
+.sab-center {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: min(520px, calc(100% - 32px));
-  transform: translate(-50%, -50%) rotate(-2deg);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.sab-note--big {
+  width: min(520px, 100%);
   padding: 28px 32px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   border-radius: var(--radius-a);
-  z-index: 6;
 }
 
 .sab-note-head {
@@ -98,7 +103,6 @@
   padding: 10px 16px;
   border-color: var(--danger);
   border-radius: var(--radius-b);
-  transform: rotate(-1deg);
 }
 
 .sab-note--small div {
