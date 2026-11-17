@@ -1,6 +1,7 @@
 {
   "name": "lag-switch",
   "private": true,
+  "license": "MIT",
   "description": "A 1v1 top-down duel where the weapons are everything that goes wrong when you play online.",
   "type": "module",
   "packageManager": "pnpm@10.15.1",
