@@ -1,0 +1,16 @@
+# Production: one container behind the shared Caddy in /srv/proxy.
+# Nest serves the API, the WebSocket and the built SPA on port 3000, reachable
+# only through the external `proxy` network (no ports published on the host).
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      proxy:
+        aliases: [lagswitch]
+
+networks:
+  proxy:
+    external: true

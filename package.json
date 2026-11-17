@@ -11,11 +11,12 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "turbo run typecheck && tsc -p e2e/tsconfig.json",
     "test": "turbo run test",
     "lint": "biome check .",
     "format": "biome check --write .",
-    "ci": "biome ci . && turbo run typecheck test build"
+    "ci": "biome ci . && turbo run typecheck test build && playwright test",
+    "e2e": "playwright test"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.8",

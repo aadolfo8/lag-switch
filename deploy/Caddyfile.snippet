@@ -1,0 +1,5 @@
+# Add to the shared Caddyfile in /srv/proxy, then reload Caddy.
+# reverse_proxy forwards WebSocket upgrades (/ws) with no extra configuration.
+lagswitch.hidan.es {
+	reverse_proxy lagswitch:3000
+}
