@@ -18,11 +18,21 @@ export const NET = {
   reconnectGraceMs: 10_000,
 } as const;
 
+/** Length of one simulation step. Every input advances the player by exactly this much. */
+export const TICK_MS = 1000 / NET.tickRate;
+
 export const PLAYER = {
   radius: 16,
   maxHp: 100,
   /** Top speed in units per second. */
-  speed: 220,
+  speed: 240,
+  /**
+   * How quickly velocity reaches the target (1/s). High enough to feel snappy,
+   * low enough that starting and stopping read as motion, not teleporting.
+   */
+  acceleration: 18,
+  /** Delay after pressing Q before the new weapon can fire. */
+  switchMs: 200,
 } as const;
 
 export const WEAPONS = {
@@ -64,4 +74,12 @@ export const ROOMS = {
   /** No 0/O and no 1/I: a code read aloud or from a screenshot is never ambiguous. */
   codeAlphabet: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
   idleExpiryMs: 10 * 60_000,
+} as const;
+
+/** How long each sabotage lasts on its victim. The behaviour lives in src/sabotages. */
+export const SABOTAGE_DURATION_MS = {
+  lagSpike: 5000,
+  packetLoss: 5000,
+  wifiReset: 3000,
+  deadBattery: 2000,
 } as const;

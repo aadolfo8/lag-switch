@@ -6,7 +6,11 @@
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "types": ["vite/client"],
-    "noEmit": true
+    "noEmit": true,
+    // Same trick as the Vite alias: type-check against core's source, never a stale build.
+    "paths": {
+      "@lag-switch/core": ["../../packages/core/src/index.ts"]
+    }
   },
   "include": ["src", "vite.config.ts"]
 }

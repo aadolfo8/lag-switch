@@ -13,13 +13,13 @@ pnpm install
 pnpm dev        # Vite on :5173, Nest on :3000
 ```
 
-| Command          | What it does                              |
-| ---------------- | ----------------------------------------- |
-| `pnpm dev`       | web + server + core in watch mode         |
-| `pnpm build`     | builds every package (Turborepo, cached)  |
-| `pnpm test`      | Vitest across the monorepo                |
-| `pnpm typecheck` | `tsc --noEmit` everywhere                 |
-| `pnpm lint`      | Biome lint + format check                 |
+| Command          | What it does                             |
+| ---------------- | ---------------------------------------- |
+| `pnpm dev`       | web + server + core in watch mode        |
+| `pnpm build`     | builds every package (Turborepo, cached) |
+| `pnpm test`      | Vitest across the monorepo               |
+| `pnpm typecheck` | `tsc --noEmit` everywhere                |
+| `pnpm lint`      | Biome lint + format check                |
 
 ## Layout
 

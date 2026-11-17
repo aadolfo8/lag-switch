@@ -1,0 +1,161 @@
+.hud-top,
+.hud-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: 16px 28px;
+  pointer-events: none;
+  font-family: var(--font-hand);
+}
+
+.hud-top {
+  top: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 24px;
+}
+
+.hud-bottom {
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.hud-player {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hud-player--rival {
+  align-items: flex-end;
+}
+
+.hud-name {
+  font-size: 24px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.hud-player--you .hud-name {
+  color: var(--you);
+}
+
+.hud-player--rival .hud-name {
+  color: var(--rival);
+}
+
+.hud-hp {
+  position: relative;
+  width: min(100%, 320px);
+  height: 14px;
+  border: 2px solid var(--ink);
+  border-radius: 3px 6px 2px 5px;
+}
+
+.hud-hp span {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  max-width: calc(100% - 4px);
+  background: var(--you);
+  transition: width 120ms ease-out;
+}
+
+.hud-player--rival .hud-hp {
+  border-radius: 6px 3px 5px 2px;
+}
+
+.hud-player--rival .hud-hp span {
+  left: auto;
+  right: 2px;
+  background: var(--rival);
+}
+
+.hud-meta,
+.hud-clock {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.hud-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.hud-round {
+  font-size: 22px;
+  color: var(--ink-muted);
+}
+
+.hud-points {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hud-clock {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.hud-slot-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hud-label {
+  font-size: 22px;
+  color: var(--ink-muted);
+}
+
+.hud-slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 2px dashed var(--shadow);
+  border-radius: var(--radius-a);
+  padding: 6px 14px;
+  color: var(--ink-muted);
+}
+
+.hud-slot--full {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.hud-slot-name {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.hud-keys {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  border: 1.5px solid var(--ink-muted);
+  border-radius: 3px 5px 2px 4px;
+  padding: 1px 6px;
+}

@@ -9,6 +9,8 @@ const swatches = [
   ['highlight', '--highlight'],
 ] as const;
 
+import { Link } from '@tanstack/react-router';
+
 /** Phase 1 placeholder: proves fonts and palette are wired. Replaced by the real menu later. */
 export function HomePage() {
   return (
@@ -36,6 +38,12 @@ export function HomePage() {
       >
         A 1v1 duel where the weapons are everything that goes wrong when you play online.
       </p>
+      <Link
+        to="/play/local"
+        style={{ fontFamily: 'var(--font-hand)', fontSize: 30, color: 'var(--highlight)' }}
+      >
+        offline sandbox →
+      </Link>
       <ul
         style={{
           listStyle: 'none',
