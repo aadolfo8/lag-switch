@@ -1,0 +1,58 @@
+.play {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.room-note {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(520px, calc(100% - 32px));
+  transform: translate(-50%, -50%) rotate(-1.5deg);
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-a);
+  box-shadow: 6px 6px 0 var(--shadow);
+  z-index: 5;
+}
+
+.room-note h2 {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 0.95;
+}
+
+.room-note p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--ink-body);
+}
+
+.room-share {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.room-code {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  padding: 4px 12px;
+  background: linear-gradient(transparent 55%, var(--highlight-soft) 55%);
+}
+
+.room-note .room-hint {
+  font-size: 14px;
+  color: var(--ink-muted);
+}

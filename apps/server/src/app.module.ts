@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { env, hasWebBuild } from './env.js';
+import { GameModule } from './game/game.module.js';
 import { HealthController } from './health/health.controller.js';
 
 /**
@@ -18,7 +19,7 @@ const staticModules = hasWebBuild()
   : [];
 
 @Module({
-  imports: [...staticModules],
+  imports: [GameModule, ...staticModules],
   controllers: [HealthController],
 })
 export class AppModule {}

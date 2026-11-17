@@ -1,0 +1,263 @@
+.menu {
+  min-height: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 56px 72px;
+  display: flex;
+  gap: 64px;
+}
+
+.menu-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.menu-title {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-title h1 {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: clamp(72px, 11vw, 128px);
+  line-height: 0.85;
+  transform: rotate(-2deg);
+  transform-origin: left;
+}
+
+.menu-title h1 span {
+  color: var(--danger);
+}
+
+.menu-title svg {
+  max-width: 100%;
+}
+
+.menu-tagline {
+  margin: 0;
+  max-width: 480px;
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--ink-body);
+}
+
+.menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 460px;
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-hand);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  border: 2px solid var(--ink);
+  transition:
+    transform 120ms ease-out,
+    box-shadow 120ms ease-out;
+}
+
+.btn:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.btn-primary {
+  min-height: 64px;
+  padding: 10px 24px;
+  font-size: 34px;
+  color: var(--paper);
+  background: var(--highlight);
+  border-radius: var(--radius-a);
+  box-shadow: var(--drop);
+}
+
+.btn-primary:hover {
+  transform: translate(-1px, -1px) rotate(-0.4deg);
+  box-shadow: 7px 7px 0 var(--shadow);
+}
+
+.btn-primary:active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 var(--shadow);
+}
+
+.btn-secondary {
+  min-height: 56px;
+  padding: 8px 24px;
+  font-size: 30px;
+  color: var(--ink);
+  background: transparent;
+  border-radius: var(--radius-b);
+}
+
+.btn-secondary:hover {
+  background: var(--panel);
+}
+
+.btn-small {
+  min-height: 44px;
+  padding: 4px 16px;
+  font-size: 24px;
+  color: var(--ink);
+  background: var(--panel);
+  border-radius: var(--radius-c);
+}
+
+.btn-small:hover {
+  border-color: var(--highlight);
+}
+
+/* ---------- inputs ---------- */
+
+.menu-join,
+.menu-name {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.menu-join label,
+.menu-name label {
+  font-family: var(--font-hand);
+  font-size: 24px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.menu-join input,
+.menu-name input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 2px dashed var(--ink-muted);
+  border-radius: var(--radius-c);
+}
+
+.menu-join input {
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.menu-join input::placeholder {
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink-muted);
+}
+
+.menu-name input {
+  border-style: solid;
+  border-color: var(--shadow);
+}
+
+.menu-error {
+  margin: 0;
+  font-size: 15px;
+  color: var(--danger);
+}
+
+.menu-links {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  font-family: var(--font-hand);
+  font-size: 24px;
+}
+
+.menu-links a {
+  color: var(--you);
+}
+
+.menu-links a:hover {
+  color: var(--highlight);
+}
+
+/* ---------- arsenal ---------- */
+
+.arsenal {
+  flex: 0 0 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.arsenal h2 {
+  margin: 0 0 6px;
+  font-family: var(--font-hand);
+  font-size: 40px;
+  font-weight: 700;
+}
+
+.arsenal ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.arsenal li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px dashed var(--shadow);
+}
+
+.arsenal li svg {
+  flex: none;
+}
+
+.arsenal li div {
+  display: flex;
+  flex-direction: column;
+}
+
+.arsenal-name {
+  font-family: var(--font-hand);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.arsenal-line {
+  font-size: 15px;
+  color: var(--ink-muted);
+}
+
+.arsenal-note {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-body);
+}
+
+@media (max-width: 900px) {
+  .menu {
+    flex-direction: column;
+    padding: 32px 16px;
+    gap: 48px;
+  }
+
+  .arsenal {
+    flex-basis: auto;
+  }
+}
