@@ -1,0 +1,45 @@
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--paper);
+  /* notebook rules every 32 px */
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0,
+    transparent calc(var(--rule-gap) - 1px),
+    var(--rule) calc(var(--rule-gap) - 1px),
+    var(--rule) var(--rule-gap)
+  );
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--highlight);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: the user's reduced-motion preference must beat any component style */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: same as above */
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,39 @@
+/*
+ * "Dark notebook" art direction. Every colour, font and the hand-drawn shape
+ * vocabulary (uneven radii, solid offset shadows) is defined once here.
+ * The canvas side mirrors these values in src/game/palette.ts.
+ */
+:root {
+  color-scheme: dark;
+
+  /* paper */
+  --paper: #15171a;
+  --rule: #24282e;
+  --panel: #1d2024;
+  --wall: #2e3238;
+  --shadow: #3a3f46;
+
+  /* ink */
+  --ink: #ede6d6;
+  --ink-muted: #a39c8e;
+  --ink-body: #cfc7b6;
+
+  /* players and annotations */
+  --you: #7aa7ff;
+  --rival: #ff9154;
+  --danger: #ff6b6b;
+  --highlight: #ffe066;
+  --highlight-soft: rgb(255 224 102 / 0.38);
+
+  /* type */
+  --font-hand: "Caveat", "Comic Sans MS", cursive;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* shape */
+  --radius-a: 6px 12px 4px 10px;
+  --radius-b: 12px 6px 10px 4px;
+  --radius-c: 4px 8px 4px 8px;
+  --drop: 5px 5px 0 var(--shadow);
+  --rule-gap: 32px;
+}
