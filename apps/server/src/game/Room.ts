@@ -13,6 +13,7 @@ import {
   type PlayerInput,
   type PlayerState,
   PositionHistory,
+  ROOMS,
   removePlayer,
   resetMatch,
   rewindMsFor,
@@ -88,6 +89,8 @@ export type JoinResult =
 export interface RoomOptions {
   code: string;
   map?: ArenaMap;
+  /** Expire after this long without humans (default ROOMS.idleExpiryMs). */
+  idleExpiryMs?: number;
   /** Injected clock (ms) so tests can fast-forward. */
   now?: () => number;
 }
@@ -107,6 +110,9 @@ export class Room {
   private readonly history = new PositionHistory();
   /** Last time at least one human was connected; drives room expiry. */
   lastOccupiedAt: number;
+  readonly idleExpiryMs: number;
+  /** Called at the start of every tick (the bot thinks here). */
+  private readonly tickListeners: (() => void)[] = [];
 
   constructor(opts: RoomOptions) {
     this.code = opts.code;
@@ -114,6 +120,12 @@ export class Room {
     this.now = opts.now ?? Date.now;
     this.state = createMatch(this.map);
     this.lastOccupiedAt = this.now();
+    this.idleExpiryMs = opts.idleExpiryMs ?? ROOMS.idleExpiryMs;
+  }
+
+  /** Runs `fn` at the start of every tick, before inputs are applied. */
+  onTick(fn: () => void): void {
+    this.tickListeners.push(fn);
   }
 
   // ------------------------------------------------------------------ seats
@@ -254,6 +266,7 @@ export class Room {
   /** One authoritative step. Called at NET.tickRate by the registry. */
   tick(): void {
     const now = this.now();
+    for (const fn of this.tickListeners) fn();
     this.handleConnectionTimeouts(now);
 
     // Pick this tick's inputs for every seat, within budget.

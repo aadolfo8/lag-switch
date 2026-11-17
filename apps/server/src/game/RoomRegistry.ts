@@ -1,6 +1,7 @@
 import { randomInt } from 'node:crypto';
 import { ROOMS, TICK_MS } from '@lag-switch/core';
 import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
+import { Bot } from '../bot/Bot.js';
 import { Room } from './Room.js';
 import { TickLoop } from './TickLoop.js';
 
@@ -29,12 +30,27 @@ export class RoomRegistry implements OnModuleInit, OnModuleDestroy {
     if (this.sweeper) clearInterval(this.sweeper);
   }
 
-  create(): Room {
+  /**
+   * Creates a room. Bot rooms get their bot seated straight away, so the
+   * human who opened "play vs bot" starts the match the moment they join.
+   */
+  create(opts: { withBot?: boolean } = {}): Room {
     let code = generateCode();
     while (this.rooms.has(code)) code = generateCode();
-    const room = new Room({ code });
+    const room = new Room({
+      code,
+      // Nobody comes back to an abandoned bot room: free it after a minute.
+      ...(opts.withBot && { idleExpiryMs: 60_000 }),
+    });
+    if (opts.withBot) {
+      const bot = new Bot(room);
+      bot.join();
+      room.onTick(() => bot.think());
+    }
     this.rooms.set(code, room);
-    this.log.log(`room ${code} created (${this.rooms.size} open)`);
+    this.log.log(
+      `room ${code} created${opts.withBot ? ' with a bot' : ''} (${this.rooms.size} open)`,
+    );
     return room;
   }
 
@@ -65,7 +81,7 @@ export class RoomRegistry implements OnModuleInit, OnModuleDestroy {
   /** Rooms expire after ROOMS.idleExpiryMs without any human connected. */
   sweep(now = Date.now()): void {
     for (const [code, room] of this.rooms) {
-      if (room.humanCount === 0 && now - room.lastOccupiedAt > ROOMS.idleExpiryMs) {
+      if (room.humanCount === 0 && now - room.lastOccupiedAt > room.idleExpiryMs) {
         this.rooms.delete(code);
         this.log.log(`room ${code} expired (${this.rooms.size} open)`);
       }

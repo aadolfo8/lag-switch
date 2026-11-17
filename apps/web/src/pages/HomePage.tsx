@@ -64,7 +64,7 @@ export function HomePage() {
         </p>
 
         <div className="menu-actions">
-          <Link to="/play/local" className="btn btn-primary" onClick={commitName}>
+          <Link to="/play/bot" className="btn btn-primary" onClick={commitName}>
             play vs bot →
           </Link>
           <button

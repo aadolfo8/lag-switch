@@ -73,6 +73,12 @@ export const ClientMessageSchema = z.discriminatedUnion('type', [
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 
+/** Body of POST /api/rooms. */
+export const CreateRoomRequestSchema = z
+  .object({ mode: z.enum(['friend', 'bot']).default('friend') })
+  .default({ mode: 'friend' });
+export type CreateRoomRequest = z.infer<typeof CreateRoomRequestSchema>;
+
 // ---------------------------------------------------------------- server → client
 
 export type ErrorCode =

@@ -20,9 +20,11 @@ interface Props {
   created: boolean;
   /** Simulated round-trip latency (?lag=150), for testing the netcode. */
   lagMs?: number | undefined;
+  /** The rival is the server's bot: no link to share. */
+  vsBot?: boolean;
 }
 
-export function RoomPage({ code, created, lagMs }: Props) {
+export function RoomPage({ code, created, lagMs, vsBot = false }: Props) {
   const createSession = useCallback(
     () => new NetSession({ code, name: getPlayerName(), ...(lagMs && { lagMs }) }),
     [code, lagMs],
@@ -43,13 +45,13 @@ export function RoomPage({ code, created, lagMs }: Props) {
       </HudBottom>
       <SabotageNote />
       <DebugOverlay />
-      <RoomStatus code={code} created={created} />
+      <RoomStatus code={code} created={created} vsBot={vsBot} />
     </main>
   );
 }
 
 /** Overlays for the moments when there is no match to look at yet. */
-function RoomStatus({ code, created }: { code: string; created: boolean }) {
+function RoomStatus({ code, created, vsBot }: { code: string; created: boolean; vsBot: boolean }) {
   const status = useNet((s) => s.status);
   const error = useNet((s) => s.error);
   const [copied, setCopied] = useState(created);
@@ -74,6 +76,14 @@ function RoomStatus({ code, created }: { code: string; created: boolean }) {
         <Link to="/" className="btn btn-small">
           back to the menu
         </Link>
+      </div>
+    );
+  }
+
+  if (vsBot && (status === 'connecting' || status === 'idle' || status === 'waiting')) {
+    return (
+      <div className="room-note" role="status">
+        <h2>Connecting…</h2>
       </div>
     );
   }

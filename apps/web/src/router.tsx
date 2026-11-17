@@ -7,6 +7,7 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { HomePage } from './pages/HomePage';
+import { PlayBotPage } from './pages/PlayBotPage';
 import { PlayLocalPage } from './pages/PlayLocalPage';
 import { RoomPage } from './pages/RoomPage';
 
@@ -25,15 +26,29 @@ const localRoute = createRoute({
   component: PlayLocalPage,
 });
 
+/** Accepts ?lag=150: simulated round-trip latency on your own connection. */
+const parseLag = (search: Record<string, unknown>): { lag?: number } => {
+  const lag = Number(search.lag);
+  return Number.isInteger(lag) && lag > 0 && lag <= 1000 ? { lag } : {};
+};
+
+const botRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/play/bot',
+  validateSearch: parseLag,
+  component: function BotRoute() {
+    const { lag } = botRoute.useSearch();
+    return <PlayBotPage lagMs={lag} />;
+  },
+});
+
 const roomRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/room/$code',
   validateSearch: (search: Record<string, unknown>): { created?: boolean; lag?: number } => {
-    const lag = Number(search.lag);
     return {
       ...((search.created === true || search.created === 'true') && { created: true }),
-      // ?lag=150 simulates 150 ms of round-trip latency on your own connection.
-      ...(Number.isInteger(lag) && lag > 0 && lag <= 1000 && { lag }),
+      ...parseLag(search),
     };
   },
   beforeLoad: ({ params }) => {
@@ -52,7 +67,7 @@ const roomRoute = createRoute({
   },
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, localRoute, roomRoute]);
+const routeTree = rootRoute.addChildren([homeRoute, botRoute, localRoute, roomRoute]);
 
 export const router = createRouter({ routeTree });
 
