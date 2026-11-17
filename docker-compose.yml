@@ -1,4 +1,6 @@
-# Production: one container behind the shared Caddy in /srv/proxy.
+# Manual / local build of the production container. The automatic deployment
+# uses docker-compose.production.yml with the image built by GitHub Actions.
+# One container behind the shared Caddy in /srv/proxy.
 # Nest serves the API, the WebSocket and the built SPA on port 3000, reachable
 # only through the external `proxy` network (no ports published on the host).
 services:

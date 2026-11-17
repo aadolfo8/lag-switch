@@ -1,0 +1,28 @@
+# Producción en el VPS (/srv/lag-switch). No publica puertos: el Caddy compartido
+# del VPS pone el HTTPS y llega a `app` por la red externa `proxy` con el alias
+# lagswitch (WebSocket incluido).
+# La imagen se construye en GitHub Actions y se publica en ghcr.io con el SHA del
+# commit como tag; el workflow de despliegue exporta LAGSWITCH_IMAGE_TAG antes de
+# cada comando.
+name: lag-switch
+
+services:
+  app:
+    image: ghcr.io/aadolfo8/lag-switch:${LAGSWITCH_IMAGE_TAG:?LAGSWITCH_IMAGE_TAG es obligatorio (el SHA desplegado)}
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      proxy:
+        aliases: [lagswitch]
+
+networks:
+  # Red del Caddy compartido; la crea /srv/proxy.
+  proxy:
+    external: true

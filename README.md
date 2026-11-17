@@ -143,16 +143,26 @@ Open http://localhost:5173 and press "play vs bot". For a two-player test, creat
 | `pnpm lint`      | Biome lint and format check                                                                                                    |
 | `pnpm e2e`       | Playwright smoke tests against the production build (run `pnpm build` first; `PW_CHANNEL=chrome` reuses your installed Chrome) |
 
-CI (GitHub Actions) runs Biome, typecheck, Vitest, the build, Playwright and a Docker build on every push.
+CI (GitHub Actions) runs Biome, typecheck, Vitest, the build and Playwright on every push; green pushes to `main` deploy automatically (see below).
 
 ## Deploy
 
 One container: Nest serves the API, the WebSocket and the built SPA on port 3000. On the VPS it sits behind the shared Caddy in `/srv/proxy`, on the external Docker network `proxy` with the alias `lagswitch`. No ports are published on the host.
 
+**Continuous deployment.** Every push to `main` that passes CI is deployed by [`deploy-production.yml`](.github/workflows/deploy-production.yml):
+
+1. GitHub Actions builds the image (not the VPS, which is short on RAM) and pushes it to `ghcr.io/aadolfo8/lag-switch:<commit sha>`.
+2. Over SSH, the VPS checks out that exact commit in `/srv/lag-switch`, pulls the image and restarts [`docker-compose.production.yml`](docker-compose.production.yml).
+3. It waits for the container's healthcheck (`/api/health`). If it fails, it rolls back to the last deployed commit, recorded in `.deployed-sha`. Re-running an older or already-deployed commit is a no-op.
+
+Rooms live in memory, so a deploy ends the matches in progress.
+
+The deployment needs these secrets in the `production` environment: `VPS_HOST`, `VPS_USER`, `VPS_PORT`, `VPS_DEPLOY_PATH` (`/srv/lag-switch`), `VPS_SSH_PRIVATE_KEY` and `VPS_KNOWN_HOSTS`. The VPS logs in to ghcr.io with the job's short-lived `GITHUB_TOKEN`, so there is no registry password to store.
+
+**One-time setup on the VPS:**
+
 ```bash
-# on the VPS
-git clone https://github.com/aadolfo8/lag-switch.git && cd lag-switch
-docker compose up -d --build
+git clone https://github.com/aadolfo8/lag-switch.git /srv/lag-switch
 ```
 
 Add this block to the Caddyfile in `/srv/proxy` (also in [`deploy/Caddyfile.snippet`](deploy/Caddyfile.snippet)); `reverse_proxy` passes WebSocket upgrades through with no extra configuration:
@@ -169,7 +179,7 @@ Then reload Caddy (adjust the service name to your `/srv/proxy` setup):
 cd /srv/proxy && docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
 ```
 
-To update: `git pull && docker compose up -d --build`. The image runs as the `node` user and has a healthcheck on `/api/health`.
+**Manual deploy** (no CI): `docker compose up -d --build` builds the same image on the machine with [`docker-compose.yml`](docker-compose.yml). The image runs as the `node` user.
 
 ## Stack decisions
 
