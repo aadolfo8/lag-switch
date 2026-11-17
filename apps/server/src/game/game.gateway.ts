@@ -59,7 +59,10 @@ export class GameGateway implements OnGatewayConnection {
         reply({ type: 'error', code: 'room_not_found' });
         return;
       }
-      const result = room.join(peer, msg.name, msg.reconnectToken);
+      const result = room.join(peer, msg.name, {
+        ...(msg.reconnectToken && { reconnectToken: msg.reconnectToken }),
+        ...(msg.lagMs && { lagMs: msg.lagMs }),
+      });
       if (!result.ok) {
         reply({ type: 'error', code: result.code });
         return;

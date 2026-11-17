@@ -123,7 +123,7 @@ describe('Room', () => {
     room.disconnect(seatA.playerId, a);
     expect(room.state.players.find((p) => p.id === seatA.playerId)?.connected).toBe(false);
     const a2 = new FakePeer();
-    const r = room.join(a2, 'Ana', seatA.reconnectToken);
+    const r = room.join(a2, 'Ana', { reconnectToken: seatA.reconnectToken });
     expect(r).toMatchObject({ ok: true, resumed: true });
     expect(a2.received[0]).toMatchObject({
       type: 'welcome',
@@ -137,7 +137,7 @@ describe('Room', () => {
   it('a stale socket closing does not kick the reconnected one', () => {
     const { room, a, seatA } = setup();
     const a2 = new FakePeer();
-    room.join(a2, 'Ana', seatA.reconnectToken);
+    room.join(a2, 'Ana', { reconnectToken: seatA.reconnectToken });
     expect(a.closed?.code).toBe(4002);
     room.disconnect(seatA.playerId, a); // old socket's close event arrives late
     expect(seatA.peer).toBe(a2);

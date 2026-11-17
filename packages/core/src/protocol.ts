@@ -46,6 +46,12 @@ export const ClientMessageSchema = z.discriminatedUnion('type', [
       .max(16)
       .regex(/^[\p{L}\p{N} _.-]+$/u, 'letters, numbers, spaces, _ . - only'),
     reconnectToken: z.string().max(64).optional(),
+    /**
+     * Testing aid (?lag=150 in the URL): the server adds this much simulated
+     * round-trip latency to this player's own connection. It can only make
+     * things worse for whoever asks for it.
+     */
+    lagMs: z.number().int().min(0).max(1000).optional(),
   }),
   z.object({
     type: z.literal('input'),

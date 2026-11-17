@@ -11,11 +11,16 @@ import {
   NET,
   opponentOf,
   type PlayerInput,
+  type PlayerState,
+  PositionHistory,
   removePlayer,
   resetMatch,
+  rewindMsFor,
   type ServerMessage,
+  type ShotTarget,
   stepMatch,
 } from '@lag-switch/core';
+import { NetworkConditioner } from '../net/NetworkConditioner.js';
 import { CloseCode, type Peer } from './peer.js';
 
 /**
@@ -53,6 +58,21 @@ export interface Seat {
   lastHeardAt: number;
   disconnectedAt: number | null;
   isBot: boolean;
+  /**
+   * How far in the past this client draws the rival (its interpolation
+   * delay). Humans: NET.interpolationDelayMs. The bot reads the latest
+   * snapshot directly, so 0. Used by lag compensation.
+   */
+  viewDelayMs: number;
+  /** Every message to and from this player goes through here. */
+  conditioner: NetworkConditioner<ClientMessage>;
+}
+
+export interface JoinOptions {
+  reconnectToken?: string;
+  isBot?: boolean;
+  /** Simulated round-trip latency for testing (?lag=150): half each way. */
+  lagMs?: number;
 }
 
 export type JoinResult =
@@ -77,6 +97,8 @@ export class Room {
   private readonly seats = new Map<string, Seat>();
   private readonly now: () => number;
   private rematchVotes = new Set<string>();
+  /** One second of positions, for lag-compensated hit detection. */
+  private readonly history = new PositionHistory();
   /** Last time at least one human was connected; drives room expiry. */
   lastOccupiedAt: number;
 
@@ -94,13 +116,17 @@ export class Room {
    * Seats a peer. With a valid reconnect token it takes back its old seat
    * (same player, same score) instead of becoming a new player.
    */
-  join(peer: Peer, name: string, reconnectToken?: string, isBot = false): JoinResult {
+  join(peer: Peer, name: string, opts: JoinOptions = {}): JoinResult {
+    const { reconnectToken, isBot = false, lagMs } = opts;
     const existing = reconnectToken
       ? [...this.seats.values()].find((s) => s.reconnectToken === reconnectToken)
       : undefined;
 
     if (existing) {
       existing.peer?.close(CloseCode.replaced, 'replaced by a newer connection');
+      // Whatever was in flight was addressed to the old socket.
+      existing.conditioner.inbound.clear();
+      existing.conditioner.outbound.clear();
       existing.peer = peer;
       existing.disconnectedAt = null;
       existing.lastHeardAt = this.now();
@@ -128,7 +154,10 @@ export class Room {
       lastHeardAt: this.now(),
       disconnectedAt: null,
       isBot,
+      viewDelayMs: isBot ? 0 : NET.interpolationDelayMs,
+      conditioner: new NetworkConditioner<ClientMessage>(),
     };
+    if (lagMs) seat.conditioner.setBase({ delayMs: lagMs / 2 });
     this.seats.set(seat.playerId, seat);
     this.broadcastEvents(addPlayer(this.state, this.map, seat.playerId, name));
     this.welcome(seat, false);
@@ -159,9 +188,18 @@ export class Room {
 
   // --------------------------------------------------------------- messages
 
+  /**
+   * A validated message arrived from a player's socket. It goes through that
+   * player's network conditioner first (it may be delayed or lost there).
+   */
   receive(playerId: string, msg: ClientMessage): void {
     const seat = this.seats.get(playerId);
     if (!seat) return;
+    seat.conditioner.inbound.push(msg, (m) => this.handle(seat, m));
+  }
+
+  private handle(seat: Seat, msg: ClientMessage): void {
+    const playerId = seat.playerId;
     seat.lastHeardAt = this.now();
 
     switch (msg.type) {
@@ -222,11 +260,28 @@ export class Room {
       inputs.set(seat.playerId, batch);
     }
 
-    const events = stepMatch(this.state, inputs, { map: this.map });
+    const events = stepMatch(this.state, inputs, {
+      map: this.map,
+      rewindTargets: (shooter) => this.rewoundTargets(shooter),
+    });
     this.broadcastEvents(events);
+    this.history.record(this.state);
 
     if (this.humanCount > 0) this.lastOccupiedAt = now;
     if (isSnapshotTick(this.state.tick)) this.sendSnapshots();
+  }
+
+  /**
+   * Lag compensation: where the OTHER players were at the moment this shooter
+   * saw them (see PositionHistory). The shooter itself is never rewound.
+   */
+  private rewoundTargets(shooter: PlayerState): ShotTarget[] {
+    const seat = this.seats.get(shooter.id);
+    const rewind = seat ? rewindMsFor(seat.rtt, seat.viewDelayMs) : 0;
+    const time = this.state.time - rewind;
+    return this.state.players
+      .filter((p) => p.id !== shooter.id && p.hp > 0)
+      .map((p) => ({ id: p.id, pos: this.history.positionAt(p.id, time) ?? { ...p.pos } }));
   }
 
   private sendSnapshots(): void {
@@ -236,7 +291,8 @@ export class Room {
       if (!seat.peer) continue;
       const events = JSON.stringify(seat.pendingEvents);
       seat.pendingEvents = [];
-      seat.peer.send(
+      this.transmit(
+        seat,
         `{"type":"snapshot","tick":${this.state.tick},"lastProcessedSeq":${seat.lastProcessedSeq},"state":${state},"events":${events}}`,
       );
     }
@@ -279,7 +335,8 @@ export class Room {
     });
     // Resync immediately with a full snapshot instead of waiting for the next one.
     if (seat.peer) {
-      seat.peer.send(
+      this.transmit(
+        seat,
         JSON.stringify({
           type: 'snapshot',
           tick: this.state.tick,
@@ -292,7 +349,12 @@ export class Room {
   }
 
   send(seat: Seat, msg: ServerMessage): void {
-    seat.peer?.send(JSON.stringify(msg));
+    this.transmit(seat, JSON.stringify(msg));
+  }
+
+  /** Every outgoing frame goes through the seat's conditioner. */
+  private transmit(seat: Seat, raw: string): void {
+    seat.conditioner.outbound.push(raw, (r) => seat.peer?.send(r));
   }
 
   private broadcastEvents(events: GameEvent[]): void {

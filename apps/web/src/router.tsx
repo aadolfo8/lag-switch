@@ -28,8 +28,14 @@ const localRoute = createRoute({
 const roomRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/room/$code',
-  validateSearch: (search: Record<string, unknown>): { created?: boolean } =>
-    search.created === true || search.created === 'true' ? { created: true } : {},
+  validateSearch: (search: Record<string, unknown>): { created?: boolean; lag?: number } => {
+    const lag = Number(search.lag);
+    return {
+      ...((search.created === true || search.created === 'true') && { created: true }),
+      // ?lag=150 simulates 150 ms of round-trip latency on your own connection.
+      ...(Number.isInteger(lag) && lag > 0 && lag <= 1000 && { lag }),
+    };
+  },
   beforeLoad: ({ params }) => {
     // Normalise "k7qxm" to "K7QXM"; anything that can't be a code goes home.
     const parsed = RoomCodeSchema.safeParse(params.code);
@@ -40,9 +46,9 @@ const roomRoute = createRoute({
   },
   component: function RoomRoute() {
     const { code } = roomRoute.useParams();
-    const { created } = roomRoute.useSearch();
+    const { created, lag } = roomRoute.useSearch();
     // key: a different code is a different room, so remount everything.
-    return <RoomPage key={code} code={code} created={created ?? false} />;
+    return <RoomPage key={code} code={code} created={created ?? false} lagMs={lag} />;
   },
 });
 

@@ -1,8 +1,9 @@
 .debug {
   position: absolute;
-  top: 120px;
+  bottom: 72px;
   right: 28px;
-  width: 300px;
+  width: 280px;
+  opacity: 0.94;
   padding: 14px 16px;
   background: rgb(29 32 36 / 0.94);
   border: 2px solid var(--ink-muted);

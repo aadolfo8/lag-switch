@@ -14,8 +14,18 @@ const ERRORS: Record<string, string> = {
   room_full: 'That room already has two players.',
 };
 
-export function RoomPage({ code, created }: { code: string; created: boolean }) {
-  const createSession = useCallback(() => new NetSession(code, getPlayerName()), [code]);
+interface Props {
+  code: string;
+  created: boolean;
+  /** Simulated round-trip latency (?lag=150), for testing the netcode. */
+  lagMs?: number | undefined;
+}
+
+export function RoomPage({ code, created, lagMs }: Props) {
+  const createSession = useCallback(
+    () => new NetSession({ code, name: getPlayerName(), ...(lagMs && { lagMs }) }),
+    [code, lagMs],
+  );
   const onKey = useCallback((k: string) => {
     if (k === 'F3') toggleDebug();
   }, []);
